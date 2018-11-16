@@ -53,10 +53,29 @@ The offsets will then be displayed like so after selecting a file type from the 
 (binview)$ 
 ```
 
+After review, you may generate a report like the one below from the main menu using [2] build profile. 
+```
+BinView v0.1 Report
+File: firmware.apk
+
+[Flagged Headers]
+
+*LZMA compressed data
+*Certificate in DER format (x509 v3)
+
+[Identified Headers]
+
+LZMA compressed data
+End of Zip archive
+Zip archive data
+Certificate in DER format (x509 v3)
+```
+
 ## Goals
 
 * Improve Static Analysis Workflow
 * Complete GUI
+* Add Aditional Report Configuration
 
 ## Dependencies
 
