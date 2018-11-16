@@ -1,5 +1,12 @@
-#!/usr/bin/env python2.7
+#########################
+# File: Main.py
+# Author: ChrisRisp
+# Project: Binview
+# Version 0.1
+#########################
+
 import os
+import sys
 import binwalk
 from collections import defaultdict
 
@@ -15,12 +22,13 @@ colors = {
     'blue': '\033[94m',
     'pink': '\033[95m',
     'green': '\033[92m',
+    'red' : '\33[31m'
 }
 
 # Artifact Count/Offset Dicts
 header_count = dict()
 header_offsets = defaultdict(list)
-
+header_flagged = []
 
 def colorize(string, color):
     if not color in colors: return string
@@ -29,7 +37,7 @@ def colorize(string, color):
 
 def analyze():
 
-    for module in binwalk.scan('firmware.apk',
+    for module in binwalk.scan(sys.argv[1],
                                signature=True,
                                quiet=True):
 
@@ -50,36 +58,40 @@ def analyze():
 
 
 def show_results():
-    submenuItems1 = [
-        {"List Offsets [#]": show_offsets},
-        {"Dump All": show_offsets},
-        {"Exit": exit},
-    ]
+    sub = True
+    while sub:
+        submenuItems1 = [
+            {"List Offsets [idx,#]": show_offsets},
+            {"Flag Filetype [#]": flag_header},
+            {"Dump All": show_offsets},
+            {"Exit": exit},
+        ]
 
-    os.system('clear')
+        os.system('clear')
 
-    # Print Table
-    print(" {0:^10}  {1:^10}".format("Count", "Type"))
-    print("-"*30)
-    idx = 0
+        # Print Table
+        print(" {0:^10}  {1:^10}".format("Count", "Type"))
+        print("-"*30)
+        idx = 0
 
-    # Get Header occurences
-    for k, v in header_count.items():
-        print ("[" + str(idx) + "] {0:^15} {1}".format(v, k))
-        idx+=1
-    print '\n'
+        # Get Header occurences
+        for k, v in header_count.items():
+            print ("[" + str(idx) + "] {0:^15} {1}".format(v, k))
+            idx+=1
+        print '\n'
 
-    for item in submenuItems1:
-        print colorize("[" + str(submenuItems1.index(item)) + "] ", 'blue') + item.keys()[0]
-    choice = raw_input("(binview)$ ")
-    selection = choice.split(',')
-    try:
-        if int(selection[0]) < 0: raise ValueError
-        # Call the matching function
+        for item in submenuItems1:
+            print colorize("[" + str(submenuItems1.index(item)) + "] ", 'blue') + item.keys()[0]
+        choice = raw_input("(binview)$ ")
+        selection = choice.split(',')
+        try:
+            if int(selection[0]) < 0: raise ValueError
+            if int(selection[0]) == 3: sub = False
+            # Call the matching function
 
-        submenuItems1[int(selection[0])].values()[0](int(selection[1]))
-    except (ValueError, IndexError):
-        pass
+            submenuItems1[int(selection[0])].values()[0](int(selection[1]))
+        except (ValueError, IndexError):
+            pass
 
 def show_offsets(selection):
     submenuItems2 = [
@@ -104,16 +116,32 @@ def show_offsets(selection):
     except (ValueError, IndexError):
         pass
 
+def flag_header(selection):
+    header_flagged.append(header_count.keys()[selection])
+    print colorize("Header Flagged!", 'red')
 
-
-#def build_profile():
+def build_profile():
     # Get Density Report: Print range of memory frequent headers
+    rp = open(sys.argv[1] + "_report.txt", "w")
 
+    # Write heading
+    rp.write("BinView v0.1 Report\n"
+            "File: " + sys.argv[1] + "\n\n")
+
+    # Write Flagged Headers
+    rp.write("[Flagged Headers]\n\n")
+    for entry in header_flagged:
+            rp.write("*" + entry + "\n")
+
+    # Write total identified headers
+    rp.write("\n\n[Identified Headers]\n\n")
+    for entry in header_count.keys():
+            rp.write(entry + "\n")
 
 menuItems = [
     {"Analyze File": analyze},
     {"Show Results": show_results},
-    {"Build Profile": show_results},#build_profile},
+    {"Build Profile": build_profile},
     {"Exit": exit},
 ]
 
