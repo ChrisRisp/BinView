@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 import os
 import binwalk
-import tabulate
+from collections import defaultdict
 
 header = "\
 __________.__            .__           \n\
@@ -17,8 +17,9 @@ colors = {
     'green': '\033[92m',
 }
 
-# Offset Genre Dict
-offsets = dict()
+# Artifact Count/Offset Dicts
+header_count = dict()
+header_offsets = defaultdict(list)
 
 
 def colorize(string, color):
@@ -32,23 +33,20 @@ def analyze():
                                signature=True,
                                quiet=True):
 
-        print("%s Results:" % module.name)
-
-
         for result in module.results:
             key = result.description.split(',')[0]
+            offset = result.offset
             try:
-                val = offsets[key]
-                offsets[key] = val+1
+                val = header_count[key]
+                header_count[key] = val+1
+                header_offsets[key].append(offset)
+
             except:
                # print ("No such entry yet")
-                offsets[key] = 1
+                header_count[key] = 1
+                header_offsets[key].append(offset)
 
-            #print ("\t%s    0x%.8X    %s" % (result.file.name,
-            #                                 result.offset,
-             #                                result.description))
-
-    raw_input("Press [Enter] to continue...")
+    raw_input("Analyzed: Press [Enter] to continue...")
 
 
 def show_results():
@@ -58,48 +56,64 @@ def show_results():
         {"Exit": exit},
     ]
 
+    os.system('clear')
+
+    # Print Table
     print(" {0:^10}  {1:^10}".format("Count", "Type"))
     print("-"*30)
-    for k, v in offsets.items():
-        print ("{0:^15} {1}".format(v, k))
+    idx = 0
+
+    # Get Header occurences
+    for k, v in header_count.items():
+        print ("[" + str(idx) + "] {0:^15} {1}".format(v, k))
+        idx+=1
+    print '\n'
 
     for item in submenuItems1:
         print colorize("[" + str(submenuItems1.index(item)) + "] ", 'blue') + item.keys()[0]
     choice = raw_input("(binview)$ ")
+    selection = choice.split(',')
     try:
-        if int(choice) < 0: raise ValueError
+        if int(selection[0]) < 0: raise ValueError
         # Call the matching function
-        submenuItems1[int(choice)].values()[0]()
+
+        submenuItems1[int(selection[0])].values()[0](int(selection[1]))
     except (ValueError, IndexError):
         pass
 
-    #raw_input("Press [Enter] to continue...")
-
-
-
-def show_offsets():
+def show_offsets(selection):
     submenuItems2 = [
         {"List Offsets [#]": analyze},
         {"Dump All": show_offsets},
         {"Exit": exit},
     ]
 
+    prev_offset = 0
+    for offset in header_offsets[header_offsets.keys()[selection]]:
+        print hex(offset) + " Size: " + str(int(offset-prev_offset)) + "B"
+        prev_offset = offset
+    os.system('clear')
+
     for item in submenuItems2:
-        print colorize("[" + str(submenuItems1.index(item)) + "] ", 'blue') + item.keys()[0]
+        print colorize("[" + str(submenuItems2.index(item)) + "] ", 'blue') + item.keys()[0]
     choice = raw_input("(binview)$ ")
     try:
         if int(choice) < 0: raise ValueError
         # Call the matching function
-        submenuItems1[int(choice)].values()[0]()
+        submenuItems2[int(choice)].values()[0]()
     except (ValueError, IndexError):
         pass
 
 
 
+#def build_profile():
+    # Get Density Report: Print range of memory frequent headers
+
+
 menuItems = [
     {"Analyze File": analyze},
     {"Show Results": show_results},
-    {"Build Profile": show_offsets},
+    {"Build Profile": show_results},#build_profile},
     {"Exit": exit},
 ]
 
@@ -107,7 +121,6 @@ menuItems = [
 def main():
     while True:
         os.system('clear')
-        # Print some badass ascii art header here !
         print colorize(header, 'blue')
         print colorize('version 0.1\n', 'green')
         for item in menuItems:
