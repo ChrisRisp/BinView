@@ -79,5 +79,12 @@ Certificate in DER format (x509 v3)
 
 ## Dependencies
 
+* Python2.7
+* Binwalk
+
 Refer to Installation of Binwalk for python
 [Here](https://github.com/ReFirmLabs/binwalk/blob/master/INSTALL.md)
+
+## Authors
+
+[ChrisRisp](https://github.com/ChrisRisp/)
