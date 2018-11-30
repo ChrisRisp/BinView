@@ -1,6 +1,7 @@
 #########################
 # File: Main.py
 # Author: ChrisRisp
+# Contributor: Fdrozenski
 # Project: Binview
 # Version 0.2
 #########################
