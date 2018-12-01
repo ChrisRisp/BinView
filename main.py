@@ -215,24 +215,26 @@ def build_profile():
 # Layout Graphing
 #
 def build_graph():
+    scale = 16 # Produce 1:16 scale graph
+
     file_size = os.stat(sys.argv[1]).st_size
     print ("File Size: " + str(file_size))
     print ("File End: " + str(hex(file_size)))
-    print ("Row Count: " + str(file_size/(file_size/16)))
-    row_count = file_size/(file_size/16)
+    print ("Row Count: " + str(file_size/(file_size/scale)))
+    row_count = file_size/(file_size/scale)
     row_size = math.ceil(file_size/row_count)
     print "Size Per Row: " + str(row_size)
 
-    # Rows to be inserted
+    # Flagged Areas to be inserted into graph
     marker_rows = []
 
     # Distance between marked locations for averaging
-    mem_avg = []
-    #
-    #######################
+    mem_avgs = []
+    mem_avg_tmp = []
+    mem_percentage = []
 
     # Calculate Size Percentage
-    ############################################333
+    ###############################################
     flag_name = ""
     flagged_size_total = 0
     # How many offsets associate with flag len(val)
@@ -244,39 +246,51 @@ def build_graph():
             # Should be size
             flagged_size_total += int(offset[1])
             if prev_off != -1:
-                mem_avg.append(math.fabs(int(offset[0])))
+                mem_avg_tmp.append(math.fabs(int(offset[0])))
             prev_off=offset[0]
 
-    area = (float(flagged_size_total) / float(file_size))
-    area_percent = area * 100
-    print "Occupies " + str(area_percent) + "%"
-    #####################################################
+        dist_total = 0
+        for dist in mem_avg_tmp:
+            dist_total += dist
+        dist_total = dist_total / len(mem_avg_tmp)
+        mem_avgs.append([flag_name, dist_total])
+        area = (float(flagged_size_total) / float(file_size))
+        area_percent = area * 100
+        print "Memory Occupied: (" + flag_name +"): " + str((area_percent) + "%")
+
+
+
+    #area_percent = area * 100
+    #print "Flagged Offsets Occupy: " + str(area_percent) + "%"
+    ###############################################
 
     #Calculate memory range
     ###############################################
 
     #Add sizes, Check distance between offsets and place into memory area
-    dist_total = 0
-    for dist in mem_avg:
-        dist_total+=dist
-    dist_total = dist_total/len(mem_avg)
 
-    print "Average Memory location: " + str(hex(int(dist_total)))
 
+    #
+    ###############################################
 
     print colorize("|------------------------|", 'blue')
-    for i in range(0,file_size/(file_size/16)+1): # Or size of file
+    for i in range(0,file_size/(file_size/scale)+1): # Or size of file
 
+        in_row = False
         curr = row_size * i
         next = row_size * (i +1)
 
 
-        if(((row_size*i) <= dist_total <= (row_size*(i+1)))):
-            print colorize("|########################| <-- Addr: " + str(hex(int(curr))) + " <-- Flag: " + flag_name + " Avg: " + str(hex(int(dist_total))), 'red')
+        for addr in mem_avgs:
+            if(((row_size*i) <= addr[1] <= (row_size*(i+1)))):
+                print colorize("|########################| <-- Addr: " + str(hex(int(curr))) +
+                                " <-- Flag: " + addr[0] + " Avg: " + str(hex(int(addr[1]))), 'red')
+                in_row=True
 
-        else:
+        if(not in_row):
             print colorize("|########################| <-- Addr: " + str(hex(int(curr))), 'blue')
-    #
+        in_row=False
+        #
         #else:
          #   print colorize("|                        |", 'blue')
         # If there is a density
