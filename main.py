@@ -26,6 +26,7 @@ import sys
 import binwalk
 import math
 from collections import defaultdict
+from subprocess import Popen, PIPE, STDOUT
 
 
 header = "\
@@ -145,9 +146,10 @@ def show_results():
 #
 def show_offsets(selection):
     submenuItems2 = [
-        {"DD Extract [#]": analyze},
+        {"Inspect [#, bytes]": inspect_offset},
         {"Flag Filetype [#]": flag_header},
-        {"Dump All": show_offsets},
+        {"DD Extract [#]": analyze},
+        {"Extract All": show_offsets},
         {"Exit": exit},
     ]
 
@@ -178,13 +180,18 @@ def show_offsets(selection):
     try:
         if int(off_selection[0]) < 0: raise ValueError
         # Call the matching function
+        a=str(header_offsets[header_offsets.keys()[selection]][0][0])
+      #  b=header_offsets[header_offsets.keys()[selection]][int(off_selection[1])]
+        if int(off_selection[0]) == 0:
+            submenuItems2[int(choice[0])].values()[0](str(hex(header_offsets[header_offsets.keys()[selection]][0][0])),
+                                                     str(off_selection[1]))
 
         if int(off_selection[0]) == 1:
             submenuItems2[int(choice[0])].values()[0](str(off_selection[2]),
                                                       header_offsets[header_offsets.keys()[selection]][int(off_selection[1])])
         else:
             submenuItems2[int(choice)].values()[0]()
-    except (ValueError, IndexError):
+    except (ValueError, IndexError) as e:
         pass
 
 #
@@ -311,6 +318,15 @@ def get_size(meta_data):
             break
     return size
 
+
+#
+# Offsets submenu 2
+#
+def inspect_offset(offset, bytes):
+    cmd = 'hexdump -n'+bytes+' -C -s '+offset+' '+sys.argv[1]
+    p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+    output = p.stdout.read()
+    print output
 
 
 menuItems = [
