@@ -12,12 +12,8 @@
 If we flag a group of offsets together with the same label ( When should it flag region )
 Offsets within given range occupy certain memory region. How much memory is this relative to the size of file. Signifigance rating
 Percentage occupied in memory.
-
-
 Time is important in forensic investigation this improves the workflow.
-
 Flag region of memory as known type
-
 '''
 ####
 
@@ -25,6 +21,7 @@ import os
 import sys
 import binwalk
 import math
+import datetime
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 
@@ -156,6 +153,8 @@ def show_offsets(selection):
         {"Exit": exit},
     ]
 
+
+    # Print offsets for selected filetype
     idx = 0
     for offset in header_offsets[header_offsets.keys()[selection]]:
         if (len(offset) > 2):
@@ -173,9 +172,6 @@ def show_offsets(selection):
         print ""
     print ""
 
-    #prev_offset = offset
-    #os.system('clear')
-
     for item in submenuItems2:
         print colorize("[" + str(submenuItems2.index(item)) + "] ", 'blue') + item.keys()[0]
     choice = raw_input("(binview)$ ")
@@ -183,8 +179,6 @@ def show_offsets(selection):
     try:
         if int(off_selection[0]) < 0: raise ValueError
         # Call the matching function
-        a=str(header_offsets[header_offsets.keys()[selection]][0][0])
-      #  b=header_offsets[header_offsets.keys()[selection]][int(off_selection[1])]
         if int(off_selection[0]) == 0:
             submenuItems2[int(choice[0])].values()[0](str(hex(header_offsets[header_offsets.keys()[selection]][0][0])),
                                                      str(off_selection[2]))
@@ -201,12 +195,8 @@ def show_offsets(selection):
 # Flag header
 #
 def flag_header(description, offset):
-    #global flag_count
-    # Header name [header_count.keys()[selection]
     size = get_size(offset)
     header_flagged[description].append([offset[0], size])
-   # header_flagged.append(header_count.keys()[selection])
-    #flag_count+=1
     print colorize("Header Flagged!", 'red')
 
 #
@@ -217,44 +207,58 @@ def build_profile():
     # Get Density Report: Print range of memory frequent headers
     rp = open(sys.argv[1] + "_report.txt", "w")
 
+
     # Write heading
-    rp.write("BinView v0.1 Report\n"
-            "File: " + sys.argv[1] + "\n\n")
+    rp.write("BinView v0.2 Report\n"
+            "File: " + sys.argv[1] + "\n")
+    rp.write(str(datetime.datetime.now()) + "\n\n")
 
     # Write Flagged Headers
     rp.write("[Flagged Headers]\n\n")
-    for entry in header_flagged:
-            rp.write("*" + entry + "\n")
+    for key, val in header_flagged.items():
+        flag_name = key
+        rp.write("*" + key + "\n")
 
     # Write total identified headers
     rp.write("\n\n[Identified Headers]\n\n")
     for entry in header_count.keys():
             rp.write(entry + "\n")
 
+    rp.write("\n\n[Binary Graph]\n\n")
+    build_graph(rp)
+
+
 #
 # Layout Graphing
 #
-def build_graph():
+def build_graph(rp):
     scale = 16 # Produce 1:16 scale graph
 
     file_size = os.stat(sys.argv[1]).st_size
-    print ("File Size: " + str(file_size))
-    print ("File End: " + str(hex(file_size)))
-    print ("Row Count: " + str(file_size/(file_size/scale)))
+    tmp = "File Size: " + str(file_size)
+    print tmp
+    rp.write("\n" + tmp + "\n")
+
+    tmp = "File End: " + str(hex(file_size))
+    print tmp
+    rp.write("" + tmp + "\n")
+
+    tmp = "Row Count: " + str(file_size/(file_size/scale))
+    print tmp
+    rp.write("" + tmp + "\n")
+
     row_count = file_size/(file_size/scale)
     row_size = math.ceil(file_size/row_count)
-    print "Size Per Row: " + str(row_size)
+    tmp = "Size Per Row: " + str(row_size)
+    print tmp
+    rp.write("" + tmp + "\n")
 
     # Flagged Areas to be inserted into graph
-    marker_rows = []
-
     # Distance between marked locations for averaging
     mem_avgs = []
     mem_avg_tmp = []
-    mem_percentage = []
 
     # Calculate Size Percentage
-    ###############################################
     flag_name = ""
     flagged_size_total = 0
     # How many offsets associate with flag len(val)
@@ -276,23 +280,20 @@ def build_graph():
         mem_avgs.append([flag_name, dist_total])
         area = (float(flagged_size_total) / float(file_size))
         area_percent = area * 100
-        print ("Memory Occupied: (" + flag_name +"): " + str((area_percent)) + "%")
+
+        tmp = "Memory Occupied: (" + flag_name +"): " + str((area_percent)) + "%"
+        print tmp
+        rp.write("" + tmp + "\n")
+
         flagged_size_total=0
 
+    # Start building Visual
 
+    tmp = colorize("|------------------------|", 'blue')
+    tmp2 = "|------------------------|"
+    print tmp
+    rp.write("\n" + tmp2 + "\n")
 
-    #area_percent = area * 100
-    #print "Flagged Offsets Occupy: " + str(area_percent) + "%"
-    ###############################################
-
-    #Calculate memory range
-    ###############################################
-
-    #Add sizes, Check distance between offsets and place into memory area
-    #
-    ###############################################
-
-    print colorize("|------------------------|", 'blue')
     for i in range(0,file_size/(file_size/scale)+1): # Or size of file
 
         in_row = False
@@ -300,16 +301,29 @@ def build_graph():
 
         for addr in mem_avgs:
             if(((row_size*i) <= addr[1] <= (row_size*(i+1)))):
-                print colorize("|########################| <-- Addr: " + str(hex(int(curr))) +
+                tmp = colorize("|########################| <-- Addr: " + str(hex(int(curr))) +
                                 " <-- Flag: " + addr[0] + " Avg: " + str(hex(int(addr[1]))), 'red')
+                tmp2 = "|########################| <-- Addr: " + str(hex(int(curr))) +\
+                                " <-- Flag: " + addr[0] + " Avg: " + str(hex(int(addr[1])))
+                print tmp
+                rp.write("" + tmp2 + "\n")
                 in_row=True
 
         if(not in_row):
-            print colorize("|########################| <-- Addr: " + str(hex(int(curr))), 'blue')
+            tmp = colorize("|########################| <-- Addr: " + str(hex(int(curr))), 'blue')
+            tmp2 = "|########################| <-- Addr: " + str(hex(int(curr)))
+            print tmp
+            rp.write("" + tmp2 + "\n")
 
-    print colorize("|------------------------|", 'blue')
+    tmp = colorize("|------------------------|", 'blue')
+    tmp2 = "|------------------------|"
+    print tmp
+    rp.write("" + tmp2 + "\n")
 
 
+#
+# get size helper function for binwalk metadata
+#
 def get_size(meta_data):
     size = 0
     for el in meta_data:
@@ -335,7 +349,7 @@ def inspect_offset(offset, bytes):
 menuItems = [
     {"Analyze File": analyze},
     {"Show Results": show_results},
-    {"Build Profile": build_graph},
+    {"Build Profile": build_profile},
     {"Exit": exit},
 ]
 
