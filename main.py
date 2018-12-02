@@ -90,7 +90,10 @@ def analyze():
                 header_count[key] = 1
                 # Save Metadata
                 if (len(meta) >= 5):
-                    header_offsets[key].append([offset, meta[2], meta[3], meta[4]])
+                    meta_fields = [offset]
+                    for el in meta:
+                        meta_fields.append(el)
+                    header_offsets[key].append(meta_fields)
                 if (len(meta) == 4):
                     header_offsets[key].append([offset, meta[2], meta[3]])
                 if (len(meta) == 3):
