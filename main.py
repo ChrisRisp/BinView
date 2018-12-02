@@ -187,7 +187,7 @@ def show_offsets(selection):
       #  b=header_offsets[header_offsets.keys()[selection]][int(off_selection[1])]
         if int(off_selection[0]) == 0:
             submenuItems2[int(choice[0])].values()[0](str(hex(header_offsets[header_offsets.keys()[selection]][0][0])),
-                                                     str(off_selection[1]))
+                                                     str(off_selection[2]))
 
         if int(off_selection[0]) == 1:
             submenuItems2[int(choice[0])].values()[0](str(off_selection[2]),
