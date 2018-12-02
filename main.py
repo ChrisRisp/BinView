@@ -83,16 +83,17 @@ def analyze():
             except:
                 # print ("No such entry yet")
                 # Increment Occurence count
+                if (len(meta) == 2):
+                    continue
+
                 header_count[key] = 1
                 # Save Metadata
-                if (len(meta) == 5):
+                if (len(meta) >= 5):
                     header_offsets[key].append([offset, meta[2], meta[3], meta[4]])
                 if (len(meta) == 4):
                     header_offsets[key].append([offset, meta[2], meta[3]])
-
-
-
-
+                if (len(meta) == 3):
+                    header_offsets[key].append([offset, meta[2]])
 
     raw_input("Analyzed: Press [Enter] to continue...")
 
@@ -153,14 +154,22 @@ def show_offsets(selection):
     idx = 0
     for offset in header_offsets[header_offsets.keys()[selection]]:
         if (len(offset) > 2):
-            print "["+str(idx)+"] " + "Offset: " + hex(offset[0]) + offset[1] + " Bytes"
+            sys.stdout.write("["+str(idx)+"] " + "Offset: " + hex(offset[0]))
+            for i in range(1,len(offset)):
+                sys.stdout.write(str(offset[i]))
+                sys.stdout.write(' ')
         else:
-            print "["+str(idx)+"] " + "Offset: " + hex(offset[0]) + offset[1] + " Bytes"
+            sys.stdout.write("["+str(idx)+"] " + "Offset: " + hex(offset[0]))
+            for i in range(1, len(offset)):
+                sys.stdout.write(str(offset[i]))
+                sys.stdout.write(' ')
+
         idx+=1
+        print ""
+    print ""
 
-
-        prev_offset = offset
-    os.system('clear')
+    #prev_offset = offset
+    #os.system('clear')
 
     for item in submenuItems2:
         print colorize("[" + str(submenuItems2.index(item)) + "] ", 'blue') + item.keys()[0]
@@ -171,7 +180,8 @@ def show_offsets(selection):
         # Call the matching function
 
         if int(off_selection[0]) == 1:
-            submenuItems2[int(choice[0])].values()[0](str(off_selection[2]), header_offsets[header_offsets.keys()[selection]][int(off_selection[1])])
+            submenuItems2[int(choice[0])].values()[0](str(off_selection[2]),
+                                                      header_offsets[header_offsets.keys()[selection]][int(off_selection[1])])
         else:
             submenuItems2[int(choice)].values()[0]()
     except (ValueError, IndexError):
@@ -252,11 +262,12 @@ def build_graph():
         dist_total = 0
         for dist in mem_avg_tmp:
             dist_total += dist
-        dist_total = dist_total / len(mem_avg_tmp)
+        dist_total = dist_total / (len(mem_avg_tmp)+1)
         mem_avgs.append([flag_name, dist_total])
         area = (float(flagged_size_total) / float(file_size))
         area_percent = area * 100
-        print "Memory Occupied: (" + flag_name +"): " + str((area_percent) + "%")
+        print ("Memory Occupied: (" + flag_name +"): " + str((area_percent)) + "%")
+        flagged_size_total=0
 
 
 
@@ -268,8 +279,6 @@ def build_graph():
     ###############################################
 
     #Add sizes, Check distance between offsets and place into memory area
-
-
     #
     ###############################################
 
@@ -278,8 +287,6 @@ def build_graph():
 
         in_row = False
         curr = row_size * i
-        next = row_size * (i +1)
-
 
         for addr in mem_avgs:
             if(((row_size*i) <= addr[1] <= (row_size*(i+1)))):
@@ -289,11 +296,7 @@ def build_graph():
 
         if(not in_row):
             print colorize("|########################| <-- Addr: " + str(hex(int(curr))), 'blue')
-        in_row=False
-        #
-        #else:
-         #   print colorize("|                        |", 'blue')
-        # If there is a density
+
     print colorize("|------------------------|", 'blue')
 
 
