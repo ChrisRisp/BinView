@@ -1,12 +1,12 @@
 ## Purpose
 
 This project aims to create an easy to use navigable front end for binary analysis tools such as binwalk to index artifact characteristics. Currently this tool is in CLI form which will later be replaced by a GUI following the format of a multi pane hexeditor. 
-TLDR: This is a lightweight binary profiling interface with tracking / flagging and reporting.
+TLDR: This is a lightweight binary profiling interface with tracking / flagging and visualization.
 
 ## Features
 
 * Offset Tracking / Flagging
-* (TODO) Layout Visualization
+* Layout Visualization
 * Generate Report
 
 ## Use of Tool
@@ -41,37 +41,52 @@ After initial analysis the "Show results" sub menu will display all the identifi
 
 The offsets will then be displayed like so after selecting a file type from the show results sub menu
 ```
-0x20e786L Size: 271B
-0x20e8feL Size: 376B
-0x20ea31L Size: 307B
-0x20eccdL Size: 668B
-0x2142fbL Size: 22062B
-0x219df4L Size: 23289B
-[0] List Offsets [#]
-[1] Dump All
-[2] Exit
-(binview)$ 
+(binview)$ 0,0
+[0] Offset: 0xab0f4 
+Squashfs filesystem  little endian  version 2.0  
+size: 2654572 bytes  502 inodes  
+blocksize: 65536 bytes  
+created: 2012-02-08 03:43:28 
+
+[0] Inspect [#, bytes]
+[1] Flag Filetype [#]
+[2] DD Extract [#]
+[3] Extract All
+[4] Exit
 ```
+[Identified Headers]
+Squashfs filesystem
+BIN-Header
+gzip compressed data
+TRX firmware header
+
+[Binary Graph]
+
+File Size: 3363840
+File End: 0x335400
+Row Count: 16
+Size Per Row: 210240.0
+Memory Occupied: (Lzma_loader): 0.0%
+Memory Occupied: (Kernel/FS): 99.9695585997%
+Memory Occupied: (Firmware_header): 0.0%
+Memory Occupied: (Filesystem): 78.9149305556%
+
+|------------------------|
+|########################| <-- Addr: 0x0 <-- Flag: Lzma_loader Avg: 0x0
+|########################| <-- Addr: 0x0 <-- Flag: Kernel/FS Avg: 0x10
+|########################| <-- Addr: 0x0 <-- Flag: Firmware_header Avg: 0xa
+|########################| <-- Addr: 0x0 <-- Flag: Filesystem Avg: 0x2ac45
+|########################| <-- Addr: 0x33540
+|########################| <-- Addr: 0x66a80
+|########################| <-- Addr: 0x99fc0
+..........
+|########################| <-- Addr: 0x335400
+
 
 After review, you may generate a report like the one below from the main menu using [2] build profile. 
 ```
-BinView v0.1 Report
-File: firmware.apk
 
-[Flagged Headers]
-
-*LZMA compressed data
-*Certificate in DER format (x509 v3)
-
-[Identified Headers]
-
-LZMA compressed data
-End of Zip archive
-Zip archive data
-Certificate in DER format (x509 v3)
-```
-
-## Goals
+# Goals
 
 * Improve Static Analysis Workflow
 * Complete GUI
@@ -88,3 +103,8 @@ Refer to Installation of Binwalk for python
 ## Authors
 
 [ChrisRisp](https://github.com/ChrisRisp/)
+Email: cgr5364@rit.edu
+
+## Contributors
+[Fdrozenski](https://github.com/Fdrozenski/)
+Email: frd3436@rit.edu
