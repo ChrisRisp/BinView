@@ -54,6 +54,8 @@ created: 2012-02-08 03:43:28
 [3] Extract All
 [4] Exit
 ```
+
+```
 [Identified Headers]
 Squashfs filesystem
 BIN-Header
@@ -82,9 +84,8 @@ Memory Occupied: (Filesystem): 78.9149305556%
 ..........
 |########################| <-- Addr: 0x335400
 
-
-After review, you may generate a report like the one below from the main menu using [2] build profile. 
 ```
+After review, you may generate a report like the one below from the main menu using [2] build profile. 
 
 # Goals
 
